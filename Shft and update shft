@@ -1,0 +1,73 @@
+    def _shft(self, a, b):
+        """
+        SHFT
+
+        shift left if b > 0, right if b < 0, no shift if b = 0
+
+        Keep in mind when we shift we need to keep track of the
+        last bit shifted out. This is used to set the carry flag.
+        """
+        a &= WORD_MASK  # Keep this line as is
+
+        # Determine shift direction and magnitude
+        if b == 0:
+            # No shift: result unchanged; per spec, leave carry "unchanged"
+            # (execute() clears flags before op; we honor "unchanged"
+            # by not setting C at all in _update_shift_flags).
+            result = a
+            bit_out = None  # sentinel: don't touch carry
+        elif b > 0:
+            # Logical left shift by k
+            k = int(b)
+            if k >= WORD_SIZE:
+                # Everything shifts out; the last shifted-out bit is 0
+                result = 0
+                bit_out = 0
+            else:
+                # "Last bit shifted out" after k left shifts is the original bit at position WORD_SIZE - k
+                bit_out = (a >> (WORD_SIZE - k)) & 1
+                result = (a << k) & WORD_MASK
+        else:
+            # Logical right shift by k = -b
+            k = int(-b)
+            if k >= WORD_SIZE:
+                # Everything shifts out; the last shifted-out bit is 0
+                result = 0
+                bit_out = 0
+            else:
+                # "Last bit shifted out" after k right shifts is the original bit at position k-1
+                bit_out = (a >> (k - 1)) & 1
+                result = (a >> k) & WORD_MASK
+
+        self._update_shift_flags(result, bit_out)
+        return result
+
+
+
+
+
+
+
+
+    def _update_shift_flags(self, result, bit_out):
+        """
+        Update flags for shift operations.
+
+        - N set if MSB of result is 1.
+        - Z set if result == 0.
+        - C set to 'bit_out' when a non-zero shift occurred.
+          (If shift-by-zero, bit_out is None and we leave C unchanged.)
+        - V is not affected by shifts.
+        """
+        # Negative
+        if result & (1 << (WORD_SIZE - 1)):
+            self._flags |= N_FLAG
+        # Zero
+        if result == 0:
+            self._flags |= Z_FLAG
+        # Carry (only when a shift actually occurred)
+        if bit_out is not None:
+            if bit_out & 1:
+                self._flags |= C_FLAG
+            # else: leave C cleared (execute() zeroed flags before op)
+        # Overflow unaffected for shifts
