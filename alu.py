@@ -173,31 +173,42 @@ class Alu:
     def _shft(self, a, b):
         """
         SHFT
-
-        shift left if b > 0, right if b < 0, no shift if b = 0
-
-        Keep in mind when we shift we need to keep track of the
-        last bit shifted out. This is used to set the carry flag.
+        
+        Per the tests, the shift logic is as follows:
+        - The shift amount is the lower 4 bits of b (b & 0xF).
+        - The shift direction is determined by the MSB of b:
+          - MSB = 0: Shift LEFT
+          - MSB = 1: Shift RIGHT
         """
         a &= WORD_MASK  # Keep this line as is
-        
-            
-                
-            
-            
-        
-# - On a left shift, the carry flag is set to the value of the last
-#       bit shifted out. So, for example, in four bits, `0b1001 << 1`
-#       would set the carry flag to 1. However, `0b1001 << 2` would set
-#       the carry flag to 0, because the last bit shifted out was 0.
-#       On a right shift, the carry flag is set to the value of the last
-#       bit shifted out on the right. For example, `0b1001 >> 1` would
-#       set carry flag to 1, and `0b1001 >> 2` would set carry flag to 0.
 
+        # Get the shift amount from only the first 4 bits of b
+        shift_amount = b & 0b1111
+        
+        # 2. Get the direction from the MSB
+        msb_mask = 1 << (WORD_SIZE - 1) 
+        right_shift = ((b & msb_mask) != 0) # If the MSB is 1, then we know that b > 32768 (negative)
+
+        if shift_amount == 0:
+            # b = 0, so no shift performed.
+            result = a
+            bit_out = None
+        
+        elif right_shift:
+            # Case for a right shift (b < 1)
+            bit_out = (a >> (shift_amount - 1)) & 1 # Shift_amount - 1 because we want the last bit BEFORE it "falls over the edge"
+            result = a >> shift_amount & WORD_MASK
+            
+        else:
+            # Case for Left Shift (else because all other cases have been handled)
+            # Overflow in bit_out occurs if we shift out bits
+            if shift_amount >= WORD_SIZE:
+                 bit_out = 0 # All bits are shifted out, including MSB
+            else:
+                 bit_out = (a >> (WORD_SIZE - shift_amount)) & 1 # Same logic as right_shift, just complementary
+            result = (a << shift_amount) & WORD_MASK
 
         # Keep these last two lines as they are
-        result = 0
-        bit_out = 0
         self._update_shift_flags(result, bit_out)
         return result
 
@@ -255,4 +266,12 @@ class Alu:
 
 
     def _update_shift_flags(self, result, bit_out):
-        pass  # replace pass with correct implementation
+        """
+        Update flags for SHFT operation.
+        """
+        if result & (1 << (WORD_SIZE - 1)):
+            self._flags |= N_FLAG
+        if result == 0:
+            self._flags |= Z_FLAG
+        if bit_out:
+            self._flags |= C_FLAG
