@@ -25,12 +25,17 @@ class Memory:
         self._write_enable = False
 
     def _check_addr(self, address):
-        if address < 0 or (address >= STACK_BASE and address <= STACK_TOP):
+        # Make sure address is positive, in the desired range,
+        # otherwise raise a `ValueError`.
+        if address < 0 or (address < 0 or address > 0xFFFF):
             raise ValueError(f"Address {address:#06x} out of range.")
         return
-        
+
 
     def write_enable(self, b):
+        # Make sure `b` is a Boolean (hint: use `isinstance()).
+        # If not, raise `TypeError`. If OK, then set
+        # `_write_enable` accordingly.
         if not isinstance(b, bool):
             raise TypeError("Write_enable flag must be Boolean.")
         else:
