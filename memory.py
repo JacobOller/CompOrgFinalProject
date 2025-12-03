@@ -13,7 +13,7 @@ First released: 2025-11-10
   - Moved definition of `STACK_BASE` to `constants.py`.
 """
 
-from constants import STACK_BASE, WORD_SIZE
+from constants import STACK_BASE, STACK_TOP, WORD_SIZE
 
 
 class Memory:
@@ -26,14 +26,22 @@ class Memory:
 
     def _check_addr(self, address):
         # Make sure address is positive, in the desired range,
-        # otherwise raise a `ValueError`. Replace `pass` below.
-        pass
+        # otherwise raise a `ValueError`.
+        if address < 0 or (address < 0 or address > 0xFFFF):
+            raise ValueError(f"Address {address:#06x} out of range.")
+        return
+
 
     def write_enable(self, b):
         # Make sure `b` is a Boolean (hint: use `isinstance()).
         # If not, raise `TypeError`. If OK, then set
-        # `_write_enable` accordingly. Replace `pass` below.
-        pass
+        # `_write_enable` accordingly.
+        if not isinstance(b, bool):
+            raise TypeError("Write_enable flag must be Boolean.")
+        else:
+            self._write_enable = b
+        return
+
 
     def read(self, addr):
         """
@@ -41,8 +49,9 @@ class Memory:
         """
         # Make sure `addr` is OK by calling `_check_addr`. If OK, return value
         # from `_cells` or default if never written. (Hint: use `.get()`.)
-        # Replace `pass` below.
-        pass
+        self._check_addr(addr)
+
+        return self._cells.get(addr, self.default)
 
     def write(self, addr, value):
         """
@@ -51,9 +60,18 @@ class Memory:
         # Check to see if `_write_enable` is true. If not, raise `RuntimeError`.
         # Otherwise, call `_check_addr()`. If OK, write masked value to the
         # selected address, then turn off `_write_enable` when done. Return
-        # `True` on success. Replace `pass` below.
-        pass
-        return True
+        # `True` on success.
+
+        if not self._write_enable:
+            raise RuntimeError("Write attempted when write_enable is False.")
+        else:
+            self._check_addr(addr)
+
+            mask = value & 0xFFFF # Mask value to 16 bits
+            self._cells[addr] = mask
+
+            self._write_enable = False
+            return True
 
     def hexdump(self, start=0, stop=None, width=8):
         """
@@ -125,8 +143,14 @@ class InstructionMemory(Memory):
         # `super().write(start_addr + offset, word)` as needed. Important:
         # Ensure that `_loading` and `_write_enable` are set to `False` when
         # done. (Hint: use `try`/`finally`.) Replace `pass` below.
-        pass
-
+        self._write_enable = True
+        try:
+            for offset, word in enumerate(words):
+                self._write_enable = True # Since it is reset to false for every call of write
+                super().write(start_addr + offset, word)
+        finally:
+            self._write_enable = False
+            self._loading = False
 
 if __name__ == "__main__":
 
