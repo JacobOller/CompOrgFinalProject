@@ -363,6 +363,9 @@ class Instruction:    # pylint: disable=too-many-instance-attributes
         s = f"Instruction({self.mnem} (opcode={self.opcode}): "
         fmt = self.format
         if fmt is None:
+            # --- DEBUGGING LINES START ---
+            print(f"CRASH DEBUG: The bad opcode is number: {self.opcode}")
+            # --- DEBUGGING LINES END ---
             raise ValueError("Instruction format unknown")
         if fmt == 'R':
             s += (f"rd=0x{self.rd:01X}, ra=0x{self.ra:01X}, "

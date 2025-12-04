@@ -73,7 +73,11 @@ class Cpu:
             # execute...
             match self._decoded.mnem:
                 case "LOADI":
-                    self._regs.execute(rd=self._decoded.rd, data=self._decoded.imm, write_enable=True)
+                    # Get decoded immediate value and take first 8 bits.
+                    imm = self._decoded.imm & 0xFF
+                    # Write immediate value data to the register destination.
+                    self._regs.execute(rd=self._decoded.rd, data=imm, write_enable=True)
+
                     self._pc += 1
                 case "LUI":
                     # TODO Refactor for future semester(s) if any.
@@ -90,17 +94,20 @@ class Cpu:
                     # [0] because this method returns 2 variables (ra and rb).
                     initial_address = self._regs.execute(ra=self._decoded.ra)[0]
                     # Add initial_address and immediate value with ALU.
-                    final_address = self._alu.execute("ADD", initial_address, self._decoded.imm)
+                    self._alu.set_op("ADD")
+                    final_address = self._alu.execute(initial_address, self._decoded.imm)
 
                     data_to_load = self._d_mem.read(final_address) # Reading from data memory.
-                    self._regs.execute(rd=self._decoded.rd, data=data_memory_value, write_enable=True)
+                    self._regs.execute(rd=self._decoded.rd, data=data_to_load, write_enable=True)
 
                     self._pc += 1
                 case "STORE":
+                    self._
                     # Get both the value to be stored and the initial address from register.
                     (value_stored, initial_address) = self._regs.execute(ra=self._decoded.ra, rb=self._decoded.rd)
                     # Add the initial address to the offset.
-                    final_address = self._alu.execute("ADD", initial_address, self._decoded.imm)
+                    self._alu.set_op("ADD")
+                    final_address = self._alu.execute(initial_address, self._decoded.imm)
                     
                     # Write enable resets after each method call, so set it to be true.
                     self._d_mem.write_enable(True)
@@ -112,7 +119,8 @@ class Cpu:
                     # Get the value stored in register a.
                     source_value = self._regs.execute(ra=self._decoded.ra)[0]
                     # Calculate the sum of the source value and offset using the ALU.
-                    result = self._alu.execute("ADD", self._decoded.imm, source_value)
+                    self._alu.set_op("ADD")
+                    result = self._alu.execute(self._decoded.imm, source_value)
                     
                     # Write the result to the destination register (rd).
                     self._regs.execute(rd=self._decoded.rd, data=result, write_enable=True)
@@ -122,7 +130,8 @@ class Cpu:
                     # Get the values stored in register a and b.
                     (ra_source_value, rb_source_value) = self._regs.execute(ra=self._decoded.ra, rb=self._decoded.rb)
                     # Calculate the sum of these two values using the ALU.
-                    result = self._alu.execute("ADD", ra_source_value, rb_source_value)
+                    self._alu.set_op("ADD")
+                    result = self._alu.execute(ra_source_value, rb_source_value)
 
                     # Write the result to the destination register.
                     self._regs.execute(rd=self._decoded.rd, data=result, write_enable=True)
@@ -132,16 +141,35 @@ class Cpu:
                     # Get the values stored in register a and b.
                     (ra_source_value, rb_source_value) = self._regs.execute(ra=self._decoded.ra, rb=self._decoded.rb)
                     # Calculate the difference of these two values using the ALU.
-                    result = self._alu.execute("SUB", ra_source_value, rb_source_value)
+                    self._alu.set_op("SUB")
+                    result = self._alu.execute(ra_source_value, rb_source_value)
 
                     # Write the result to the destination register.
                     self._regs.execute(rd=self._decoded.rd, data=result, write_enable=True)
 
                     self._pc += 1
                 case "AND":
-                    pass  # complete implementation here
+                    # Get the values stored in register a and b.
+                    (ra_source_value, rb_source_value) = self._regs.execute(ra=self._decoded.ra, rb=self._decoded.rb)
+                    #Calculate the bitwise AND of the two register values.
+                    self._alu.set_op("AND")
+                    result = self._alu.execute(ra_source_value, rb_source_value)
+
+                    #Write the result to the destination register.
+                    self._regs.execute(rd=self._decoded.rd, data=result, write_enable=True)
+
+                    self._pc += 1
                 case "OR":
-                    pass  # complete implementation here
+                    # Get the values stored in register a and b.
+                    (ra_source_value, rb_source_value) = self._regs.execute(ra=self._decoded.ra, rb=self._decoded.rb)
+                    #Calculate the bitwise OR of the two register values.
+                    self._alu.set_op("OR")
+                    result = self._alu.execute(ra_source_value, rb_source_value)
+
+                    #Write the result to the destination register.
+                    self._regs.execute(rd=self._decoded.rd, data=result, write_enable=True)
+
+                    self._pc += 1
                 case "SHFT":
                     self._alu.set_op("SHFT")
                     rd = self._decoded.rd
@@ -155,9 +183,14 @@ class Cpu:
                         offset = self.sext(self._decoded.imm, 8)
                         self._pc += offset  # take branch
                 case "BNE":
-                    pass  # complete implementation here
+                    # Same as BEQ, except we branch when the zero flag is clear.
+                    if not self._alu.zero:
+                        offset = self.sext(self._decoded.imm, 8)
+                        self._pc += offset # take branch
                 case "B":
-                    pass  # complete implementation here
+                    # Unconditional branch.
+                    offset = self.sext(self._decoded.imm, 8)
+                    self._pc += offset # take branch
                 case "CALL":
                     self._sp -= 1  # grow stack downward
                     # PC is incremented immediately upon fetch so already
@@ -170,11 +203,13 @@ class Cpu:
                     self._pc += self.sext(offset, 8)  # jump to target
                 case "RET":
                     # Get return address from memory via SP
+                    return_address = self._d_mem.read(self._sp)
                     # Increment SP
+                    self._sp += 1
                     # Update PC
-                    pass  # complete implementation here
+                    self._pc = return_address
                 case "HALT":
-                    pass  # complete implementation here
+                    self._halt = True
                 case _:  # default
                     raise ValueError(
                         "Unknown mnemonic: " + str(self._decoded) + "\n" + str(self._ir)
@@ -190,7 +225,10 @@ class Cpu:
         self._decoded = Instruction(raw=self._ir)
 
     def _fetch(self):
-        pass  # complete implementation here
+        pc_location = self._i_mem.read(self._pc)
+        self._ir = pc_location
+
+        self._pc += 1
 
     def load_program(self, prog):
         self._i_mem.load_program(prog)
