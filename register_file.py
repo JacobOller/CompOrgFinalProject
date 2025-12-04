@@ -30,7 +30,7 @@ class Register:
         self.value = 0
 
     def read(self):
-        # Just a getter for value. Replace `pass` below.
+        # Just a getter for value.
         return self.value
 
     def write(self, value):
@@ -38,7 +38,7 @@ class Register:
         # file that serves as gatekeeper in that regard. However, our registers
         # should reject values that are too wide (too many bits). Use class
         # constants here, and raise `ValueError` on bad value, otherwise set
-        # the value field. Replace `pass` below.
+        # the value field.
         if value < self.MIN_VALUE or value > self.MAX_VALUE:
             raise ValueError(f"Bad value: {value}")
         self.value = value
@@ -64,7 +64,7 @@ class RegisterFile:
         # When we instantiate our register file, we should instantiate eight
         # register objects and include them in a list `self.registers`. Note:
         # register objects should each get a unique name, R0, R1, R2, etc.
-        # apart from their index in the list. Replace `pass` below.
+        # apart from their index in the list.
         self.registers = []
         for i in range(self.NUM_REGISTERS):
             name = f"R{i}"
@@ -77,7 +77,7 @@ class RegisterFile:
         """
         # Make sure `idx` is in the desired range, otherwise raise an
         # `IndexError` with message "Register index out of bounds!" This
-        # method needn't have an explicit return. Replace `pass` below.
+        # method needn't have an explicit return.
         if idx < 0 or idx >= self.NUM_REGISTERS:
             raise IndexError("Register index out of bounds!")
 
@@ -104,7 +104,7 @@ class RegisterFile:
         # `rb` is specified. This method should call `_check_index()` as needed
         # to ensure we have valid indices. It should *always* return a tuple,
         # the first element of which is the value at `ra`, the second element
-        # of which is the value at `rb` or `None`. Replace `pass` below.
+        # of which is the value at `rb` or `None`.
         if ra is None and rb is None:
             raise TypeError("Cannot read; no source register(s) specified!")
         if ra is None and rb is not None:
@@ -145,7 +145,7 @@ class RegisterFile:
         # this method should raise a `TypeError`. If both are supplied, this
         # method should call `_check_index()` to ensure index is good. If so,
         # it should call `write()` on the appropriate register, as selected by
-        # `rd`. Replace `pass` below.
+        # `rd`.
         if rd is None:
             raise TypeError("Cannot write; no destination specified!")
         if data is None:

@@ -142,7 +142,7 @@ class InstructionMemory(Memory):
         # memory. Set `_write_enable` as needed can call parent write with
         # `super().write(start_addr + offset, word)` as needed. Important:
         # Ensure that `_loading` and `_write_enable` are set to `False` when
-        # done. (Hint: use `try`/`finally`.) Replace `pass` below.
+        # done. (Hint: use `try`/`finally`.)
         self._write_enable = True
         try:
             for offset, word in enumerate(words):

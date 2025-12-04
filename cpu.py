@@ -91,22 +91,16 @@ class Cpu:
                     data = upper | lower
                     self._regs.execute(rd=rd, data=data, write_enable=True)
                 case "LOAD":
-                    # [0] because this method returns 2 variables (ra and rb).
-                    initial_address = self._regs.execute(ra=self._decoded.ra)[0]
-                    # Add initial_address and immediate value with ALU.
-                    self._alu.set_op("ADD")
-                    final_address = self._alu.execute(initial_address, self._decoded.imm)
-
-                    data_to_load = self._d_mem.read(final_address) # Reading from data memory.
+                    # Reading from data memory and adding offset to it.
+                    data_to_load = self._d_mem.read(self._decoded.ra) + self._decoded.imm
                     self._regs.execute(rd=self._decoded.rd, data=data_to_load, write_enable=True)
 
                     self._pc += 1
                 case "STORE":
-                    self._
+                    self._alu.set_op("ADD")
                     # Get both the value to be stored and the initial address from register.
                     (value_stored, initial_address) = self._regs.execute(ra=self._decoded.ra, rb=self._decoded.rd)
                     # Add the initial address to the offset.
-                    self._alu.set_op("ADD")
                     final_address = self._alu.execute(initial_address, self._decoded.imm)
                     
                     # Write enable resets after each method call, so set it to be true.
@@ -116,10 +110,10 @@ class Cpu:
 
                     self._pc += 1
                 case "ADDI":
+                    self._alu.set_op("ADD")
                     # Get the value stored in register a.
                     source_value = self._regs.execute(ra=self._decoded.ra)[0]
                     # Calculate the sum of the source value and offset using the ALU.
-                    self._alu.set_op("ADD")
                     result = self._alu.execute(self._decoded.imm, source_value)
                     
                     # Write the result to the destination register (rd).
@@ -127,10 +121,10 @@ class Cpu:
 
                     self._pc += 1
                 case "ADD":
+                    self._alu.set_op("ADD")
                     # Get the values stored in register a and b.
                     (ra_source_value, rb_source_value) = self._regs.execute(ra=self._decoded.ra, rb=self._decoded.rb)
                     # Calculate the sum of these two values using the ALU.
-                    self._alu.set_op("ADD")
                     result = self._alu.execute(ra_source_value, rb_source_value)
 
                     # Write the result to the destination register.
@@ -138,10 +132,10 @@ class Cpu:
 
                     self._pc += 1
                 case "SUB":
+                    self._alu.set_op("SUB")
                     # Get the values stored in register a and b.
                     (ra_source_value, rb_source_value) = self._regs.execute(ra=self._decoded.ra, rb=self._decoded.rb)
                     # Calculate the difference of these two values using the ALU.
-                    self._alu.set_op("SUB")
                     result = self._alu.execute(ra_source_value, rb_source_value)
 
                     # Write the result to the destination register.
@@ -149,10 +143,10 @@ class Cpu:
 
                     self._pc += 1
                 case "AND":
+                    self._alu.set_op("AND")
                     # Get the values stored in register a and b.
                     (ra_source_value, rb_source_value) = self._regs.execute(ra=self._decoded.ra, rb=self._decoded.rb)
                     #Calculate the bitwise AND of the two register values.
-                    self._alu.set_op("AND")
                     result = self._alu.execute(ra_source_value, rb_source_value)
 
                     #Write the result to the destination register.
@@ -160,10 +154,10 @@ class Cpu:
 
                     self._pc += 1
                 case "OR":
+                    self._alu.set_op("OR")
                     # Get the values stored in register a and b.
                     (ra_source_value, rb_source_value) = self._regs.execute(ra=self._decoded.ra, rb=self._decoded.rb)
                     #Calculate the bitwise OR of the two register values.
-                    self._alu.set_op("OR")
                     result = self._alu.execute(ra_source_value, rb_source_value)
 
                     #Write the result to the destination register.
